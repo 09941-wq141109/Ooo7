@@ -1,0 +1,1866 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#2b1055">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Bubble Woods">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <title>Bubble Woods</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Kanit:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+input {
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+body {
+    background-color: #0b021a;
+    font-family: 'Fredoka One', 'Kanit', sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    overflow: hidden;
+}
+
+#game-wrapper {
+    position: relative;
+    flex: none;
+    width: 800px;
+    height: 520px;
+    background: radial-gradient(circle at 50% 30%, #2b1055 0%, #15062b 70%, #0a0216 100%);
+    border: 6px solid #4a2179;
+    border-radius: 16px;
+    box-shadow: 0 0 40px rgba(0, 0, 0, 0.9), inset 0 0 20px rgba(168, 85, 247, 0.2);
+    overflow: hidden;
+    touch-action: none;
+    transform-origin: center center;
+}
+
+/* ---------- HUD ---------- */
+.top-bar {
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 440px;
+    height: 42px;
+    background: linear-gradient(to bottom, #d27937, #8c4212);
+    border: 3px solid #ffde7a;
+    border-radius: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    padding: 0 10px;
+    z-index: 10;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+    pointer-events: none;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #ffffff;
+    font-size: 18px;
+    text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.8);
+}
+
+.timer-container {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    pointer-events: none;
+}
+
+.timer-circle {
+    width: 76px;
+    height: 76px;
+    background: radial-gradient(circle, #e63946 0%, #a81c27 100%);
+    border: 5px solid #ffde7a;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 32px;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.6);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+.timer-circle.low {
+    animation: pulse 0.5s infinite alternate;
+}
+
+@keyframes pulse {
+    from { transform: scale(1); }
+    to   { transform: scale(1.12); }
+}
+
+.score-board {
+    margin-top: 8px;
+    min-width: 130px;
+    height: 36px;
+    padding: 0 10px;
+    background: linear-gradient(to bottom, #b86228, #6d330c);
+    border: 2px solid #ffde7a;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #ffffff;
+    font-size: 20px;
+    text-shadow: 1px 2px 2px rgba(0, 0, 0, 0.8);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+}
+
+.top-right-controls {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    z-index: 10;
+    display: flex;
+    gap: 15px;
+    color: #ffffff;
+    font-size: 22px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    cursor: pointer;
+}
+
+.control-btn {
+    transition: transform 0.1s;
+}
+
+.control-btn:active {
+    transform: scale(0.85);
+}
+
+.user-welcome {
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    color: #ffde7a;
+    font-size: 16px;
+    z-index: 10;
+    text-shadow: 1px 1px 2px #000;
+    pointer-events: none;
+}
+
+canvas {
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 5;
+    touch-action: none;
+    cursor: crosshair;
+}
+
+/* ---------- Overlays / cards ---------- */
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(10, 2, 22, 0.85);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 30;
+    backdrop-filter: blur(4px);
+}
+
+.result-card {
+    position: relative;
+    width: 380px;
+    background: #fff3d1;
+    border: 6px solid #e0c388;
+    border-radius: 20px;
+    padding: 30px 20px 25px 20px;
+    text-align: center;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(210, 160, 80, 0.3);
+}
+
+.mascot-head {
+    position: absolute;
+    top: -65px;
+    left: 20px;
+    font-size: 60px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.4));
+}
+
+.result-title {
+    font-size: 36px;
+    color: #6b3917;
+    margin: 5px 0 8px;
+    text-shadow: 1px 1px 0px #fff;
+}
+
+.hint {
+    color: #6b3917;
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px;
+    margin-bottom: 10px;
+}
+
+.hint.small {
+    font-size: 13px;
+    opacity: 0.8;
+}
+
+.accent { color: #d9381e; }
+
+.result-sub {
+    font-size: 20px;
+    color: #d9381e;
+}
+
+.final-score {
+    font-size: 48px;
+    color: #76c900;
+    margin-bottom: 6px;
+    text-shadow: 1px 2px 0 rgba(0, 0, 0, 0.25);
+}
+
+.record {
+    min-height: 22px;
+    margin-bottom: 10px;
+    color: #b8860b;
+    font-size: 16px;
+}
+
+.input-group {
+    margin: 15px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: center;
+}
+
+.input-field {
+    width: 80%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    border: 2px solid #8c4212;
+    font-family: 'Kanit', sans-serif;
+    font-size: 16px;
+    outline: none;
+    text-align: center;
+}
+
+.input-field:focus {
+    border-color: #ff4747;
+}
+
+.btn-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 15px;
+    align-items: center;
+}
+
+.btn-ok {
+    background: linear-gradient(to bottom, #ff4747, #c91818);
+    border: 3px solid #ffc2c2;
+    border-radius: 14px;
+    color: white;
+    font-size: 22px;
+    font-family: inherit;
+    padding: 8px 0;
+    width: 200px;
+    cursor: pointer;
+    box-shadow: 0 5px 0 #820b0b, 0 8px 15px rgba(0, 0, 0, 0.4);
+    transition: all 0.1s;
+    text-shadow: 1px 2px 3px rgba(0, 0, 0, 0.6);
+}
+
+.btn-ok:active {
+    transform: translateY(3px);
+    box-shadow: 0 2px 0 #820b0b, 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.btn-danger {
+    background: linear-gradient(to bottom, #d9381e, #8c1907);
+}
+
+.btn-secondary {
+    background: linear-gradient(to bottom, #b8863b, #7a4d12);
+    border-color: #ffe7a8;
+    box-shadow: 0 5px 0 #4d2f08, 0 8px 15px rgba(0, 0, 0, 0.4);
+    font-size: 18px;
+}
+
+.btn-secondary:active {
+    box-shadow: 0 2px 0 #4d2f08, 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.hidden { display: none !important; }
+
+/* ---------- หน้าแรก (หน้าปก) ---------- */
+.cover {
+    flex-direction: column;
+    background: radial-gradient(circle at 50% 38%, #5a2a94 0%, #2b1055 45%, #0a0216 100%);
+    backdrop-filter: none;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.cover > *:not(.cover-bubbles) {
+    position: relative;
+    z-index: 1;
+}
+
+.cover-art {
+    font-size: 130px;
+    line-height: 1.1;
+    filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.55));
+    animation: bob 2.4s ease-in-out infinite;
+}
+
+.cover-title {
+    font-size: 72px;
+    letter-spacing: 2px;
+    color: #ffde7a;
+    text-shadow: 0 4px 0 #8c4212, 0 8px 0 #4d2f08, 0 16px 26px rgba(0, 0, 0, 0.6);
+}
+
+.cover-tap {
+    margin-top: 22px;
+    color: #ffffff;
+    font-size: 20px;
+    letter-spacing: 3px;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    animation: blink 1.2s ease-in-out infinite;
+}
+
+.cover-bubbles {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.cb {
+    position: absolute;
+    left: var(--x);
+    bottom: -70px;
+    width: var(--s);
+    height: var(--s);
+    border-radius: 50%;
+    background: var(--c);
+    border: 3px solid var(--b);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: calc(var(--s) * 0.5);
+    opacity: 0.9;
+    animation: rise 9s linear infinite;
+    animation-delay: var(--d);
+}
+
+.cb::after {
+    content: '';
+    position: absolute;
+    top: 18%;
+    left: 20%;
+    width: 22%;
+    height: 22%;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.45);
+}
+
+@keyframes rise {
+    from { transform: translateY(0); }
+    to   { transform: translateY(-640px); }
+}
+
+@keyframes bob {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-12px); }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50%      { opacity: 0.35; }
+}
+
+/* ---------- แสดงความยินดีตอนชนะ ---------- */
+.result-msg {
+    min-height: 20px;
+    margin: 4px 0 6px;
+    color: #6b3917;
+    font-family: 'Kanit', sans-serif;
+    font-size: 15px;
+}
+
+.result-card.is-win {
+    border-color: #ffd24d;
+    box-shadow: 0 0 0 4px rgba(255, 210, 77, 0.35), 0 0 40px rgba(255, 210, 77, 0.7),
+                0 10px 30px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(210, 160, 80, 0.3);
+    animation: win-pop 0.6s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.result-card.is-win .result-title {
+    color: #d98a00;
+    font-size: 42px;
+    text-shadow: 0 2px 0 #fff, 0 4px 10px rgba(217, 138, 0, 0.45);
+}
+
+.result-card.is-win .result-sub {
+    color: #2e9e2e;
+    font-family: 'Kanit', sans-serif;
+    font-weight: 700;
+    font-size: 22px;
+}
+
+.result-msg:empty {
+    display: none;
+}
+
+.result-card.is-win .mascot-head {
+    top: -50px;
+    animation: bob 1.2s ease-in-out infinite;
+}
+
+@keyframes win-pop {
+    0%   { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1);   opacity: 1; }
+}
+
+.confetti {
+    position: absolute;
+    inset: 0;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 2;
+}
+
+.confetti i {
+    position: absolute;
+    top: -20px;
+    display: block;
+    width: var(--w);
+    height: var(--h);
+    background: var(--c);
+    border-radius: 2px;
+    animation: confetti-fall var(--t) linear var(--d) infinite;
+}
+
+@keyframes confetti-fall {
+    0%   { transform: translate3d(0, -30px, 0) rotate(0deg); }
+    100% { transform: translate3d(var(--dx), 580px, 0) rotate(var(--r)); }
+}
+
+</style>
+</head>
+<body>
+
+    <div id="game-wrapper">
+        <div class="top-bar">
+            <div class="stat-item">⭐ <span id="top-level">1</span></div>
+            <div class="stat-item">🪙 <span id="top-coins">0</span></div>
+            <div class="stat-item">🌻 <span id="top-stars">0/20</span></div>
+            <div class="stat-item">🏆 <span id="top-high">0</span></div>
+        </div>
+
+        <div class="timer-container">
+            <div class="timer-circle" id="time-display">60</div>
+            <div class="score-board" id="score-display">0</div>
+        </div>
+
+        <div class="top-right-controls">
+            <span class="control-btn" id="btn-pause" title="Pause (P)">▌▌</span>
+            <span class="control-btn" id="btn-sound" title="Sound">🔊</span>
+        </div>
+
+        <div class="user-welcome hidden" id="user-display">👤 Guest</div>
+
+        <canvas id="gameCanvas" width="800" height="520"></canvas>
+
+        <!-- หน้าแรก (หน้าปก) -->
+        <div id="screen-home" class="overlay cover">
+            <div class="cover-bubbles">
+                <span class="cb" style="--x:6%;--s:46px;--d:0s;--c:#fcd34d;--b:#f59e0b">🔥</span>
+                <span class="cb" style="--x:16%;--s:30px;--d:3s;--c:#f472b6;--b:#db2777">🍄</span>
+                <span class="cb" style="--x:27%;--s:54px;--d:6s;--c:#a78bfa;--b:#7c3aed">⭐</span>
+                <span class="cb" style="--x:40%;--s:34px;--d:1.5s;--c:#fcd34d;--b:#f59e0b">🔥</span>
+                <span class="cb" style="--x:55%;--s:50px;--d:4.5s;--c:#f472b6;--b:#db2777">🍄</span>
+                <span class="cb" style="--x:68%;--s:32px;--d:2s;--c:#a78bfa;--b:#7c3aed">⭐</span>
+                <span class="cb" style="--x:79%;--s:56px;--d:7s;--c:#fcd34d;--b:#f59e0b">🔥</span>
+                <span class="cb" style="--x:90%;--s:40px;--d:3.5s;--c:#f472b6;--b:#db2777">🍄</span>
+            </div>
+            <div class="cover-art">🐿️</div>
+            <h1 class="cover-title">Bubble Woods</h1>
+            <div class="cover-tap">TAP TO START</div>
+        </div>
+
+        <!-- หน้าล็อกอิน -->
+        <div id="screen-login" class="overlay hidden">
+            <div class="result-card">
+                <div class="mascot-head">🐿️</div>
+                <h1 class="result-title">LOGIN</h1>
+                <p class="hint">กรุณากรอกชื่อเข้าใช้งาน</p>
+                <div class="input-group">
+                    <input type="text" id="username-input" class="input-field" placeholder="ชื่อผู้เล่น..." maxlength="12" autocomplete="off">
+                </div>
+                <button class="btn-ok" id="btn-login">ENTER</button>
+            </div>
+        </div>
+
+        <!-- หน้าเริ่มเกม -->
+        <div id="screen-start" class="overlay hidden">
+            <div class="result-card">
+                <div class="mascot-head">🐿️</div>
+                <h1 class="result-title">Bubble Woods</h1>
+                <p class="hint">ยินดีต้อนรับคุณ <span id="welcome-name" class="accent"></span>!</p>
+                <p class="hint small">กดค้างเพื่อเล็ง แล้วปล่อยเพื่อยิง (P = หยุดเกม)</p>
+                <div class="btn-container">
+                    <button class="btn-ok" id="btn-play">PLAY</button>
+                    <button class="btn-ok btn-secondary" id="btn-switch">Change Player</button>
+                    <button class="btn-ok btn-secondary hidden" id="btn-install">📲 Install App</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- หน้าหยุดเกม -->
+        <div id="screen-pause" class="overlay hidden">
+            <div class="result-card">
+                <h1 class="result-title">Pause</h1>
+                <div class="btn-container">
+                    <button class="btn-ok" id="btn-resume">Resume</button>
+                    <button class="btn-ok btn-danger" id="btn-end">End Game</button>
+                    <button class="btn-ok btn-secondary" id="btn-home-pause">🏠 Home</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- หน้าสรุปผล -->
+        <div id="screen-over" class="overlay hidden">
+            <div class="result-card">
+                <div class="mascot-head" id="result-icon">🐿️🎉</div>
+                <h1 class="result-title" id="result-title">Nice!</h1>
+                <div class="result-sub" id="result-subtitle">Time Out!</div>
+                <div class="result-msg" id="result-msg"></div>
+                <div class="final-score" id="final-score">0</div>
+                <div class="record" id="result-record"></div>
+                <div class="btn-container">
+                    <button class="btn-ok" id="btn-again">PLAY AGAIN</button>
+                    <button class="btn-ok btn-secondary" id="btn-home-over">🏠 Home</button>
+                </div>
+            </div>
+            <div class="confetti" id="confetti"></div>
+        </div>
+    </div>
+
+    <noscript><p style="position:fixed;inset:0;background:#fff;color:#c00;padding:20px;z-index:9999">ต้องเปิดใช้ JavaScript เพื่อเล่นเกมนี้</p></noscript>
+
+    <script>
+/**
+ * Bubble Woods — โค้ดเกมทั้งหมดในไฟล์เดียว
+ * ลำดับ: config > storage > sound > grid > ui > game > main > pwa
+ */
+
+/* ============ config.js ============ */
+/**
+ * config.js — ค่าคงที่ทั้งหมดของเกม (ปรับบาลานซ์ได้จากที่นี่ที่เดียว)
+ */
+window.BW = window.BW || {};
+
+(function (BW) {
+    const RADIUS = 17;
+
+    BW.CONFIG = {
+        WIDTH: 800,
+        HEIGHT: 520,
+
+        // ขนาดบับเบิลและตาราง
+        RADIUS: RADIUS,
+        ROW_HEIGHT: RADIUS * Math.sqrt(3),
+        COLS: 11,          // แถวยาว = 11 ลูก, แถวสั้น = 10 ลูก
+        ROWS: 18,
+
+        // พื้นที่เล่น (11 * 34 = 374px)
+        FIELD_LEFT: 213,
+        FIELD_RIGHT: 587,
+        CEILING_Y: 62,     // ต่ำกว่าแถบ HUD ด้านบน
+        GROUND_Y: 410,     // บับเบิลแตะเส้นนี้ = แพ้
+        CANNON: { x: 400, y: 465 },
+
+        // กติกา
+        GAME_SECONDS: 60,
+        START_ROWS: 5,
+        MIN_MATCH: 3,
+        POP_SCORE: 150,
+        FLOAT_SCORE: 300,
+        GOAL_PER_LEVEL: 20,     // ต้องแตกกี่ลูกเพื่อขึ้นเลเวล (คูณด้วยเลเวล)
+        LEVEL_TIME_BONUS: 5,    // วินาทีโบนัสเมื่อขึ้นเลเวล
+        CRUSH_SECONDS: 1.0,     // เวลาที่เพดานเลื่อนลงมาตอนเกมโอเวอร์
+        CRUSH_HOLD: 0.5,        // ค้างไว้ก่อนขึ้นหน้าสรุปผล
+
+        // ความเร็ว (พิกเซล/วินาที)
+        DROP_SPEED: 4,
+        DROP_SPEED_STEP: 0.6,
+        DROP_SPEED_MAX: 10,
+        SHOT_SPEED: 900,
+        HIT_DISTANCE: RADIUS * 1.85,
+
+        TYPES: [
+            { color: '#fcd34d', border: '#f59e0b', icon: '🔥' },
+            { color: '#f472b6', border: '#db2777', icon: '🍄' },
+            { color: '#a78bfa', border: '#7c3aed', icon: '⭐' }
+        ]
+    };
+})(window.BW);
+
+/* ============ storage.js ============ */
+/**
+ * storage.js — เก็บชื่อผู้เล่น / คะแนนสูงสุด / เหรียญ ไว้ใน localStorage
+ * ครอบด้วย try/catch เผื่อเบราว์เซอร์บล็อกการเก็บข้อมูล (เกมยังเล่นได้ตามปกติ)
+ */
+window.BW = window.BW || {};
+
+(function (BW) {
+    const PREFIX = 'bubblewoods:';
+
+    BW.Storage = {
+        get: function (key, fallback) {
+            try {
+                const v = window.localStorage.getItem(PREFIX + key);
+                return v === null ? fallback : v;
+            } catch (e) {
+                return fallback;
+            }
+        },
+
+        set: function (key, value) {
+            try {
+                window.localStorage.setItem(PREFIX + key, String(value));
+            } catch (e) { /* ignore */ }
+        },
+
+        getNumber: function (key, fallback) {
+            const n = Number(this.get(key, fallback));
+            return isFinite(n) ? n : fallback;
+        }
+    };
+})(window.BW);
+
+/* ============ sound.js ============ */
+/**
+ * sound.js — เสียงเอฟเฟกต์และดนตรีประกอบด้วย Web Audio API (ไม่ต้องมีไฟล์เสียง)
+ */
+window.BW = window.BW || {};
+
+BW.Sound = (function () {
+    let ctx = null;
+    let enabled = true;
+    let bgmWanted = false;
+    let bgmTimer = null;
+    let noteIndex = 0;
+
+    const NOTES = [
+        261.63, 329.63, 392.00, 523.25, 392.00, 329.63,
+        293.66, 349.23, 440.00, 587.33, 440.00, 349.23,
+        329.63, 392.00, 493.88, 659.25, 493.88, 392.00
+    ];
+
+    /** ต้องเรียกหลังผู้ใช้กด/แตะ อย่างน้อยหนึ่งครั้ง (ข้อกำหนดของเบราว์เซอร์) */
+    function init() {
+        if (!ctx) {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            if (!AC) return;
+            ctx = new AC();
+        }
+        if (ctx.state === 'suspended') ctx.resume();
+    }
+
+    function tone(opts) {
+        if (!enabled || !ctx) return;
+        const t = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        osc.type = opts.type;
+        osc.frequency.setValueAtTime(opts.from, t);
+        if (opts.to && opts.to !== opts.from) {
+            osc.frequency.exponentialRampToValueAtTime(opts.to, t + opts.dur);
+        }
+
+        gain.gain.setValueAtTime(opts.vol, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + opts.dur);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t);
+        osc.stop(t + opts.dur);
+    }
+
+    function bgmStep() {
+        tone({ type: 'triangle', from: NOTES[noteIndex], dur: 0.25, vol: 0.04 });
+        noteIndex = (noteIndex + 1) % NOTES.length;
+    }
+
+    function startBGM() {
+        bgmWanted = true;
+        stopTimer();
+        if (enabled) bgmTimer = setInterval(bgmStep, 220);
+    }
+
+    function stopBGM() {
+        bgmWanted = false;
+        stopTimer();
+    }
+
+    function stopTimer() {
+        if (bgmTimer) {
+            clearInterval(bgmTimer);
+            bgmTimer = null;
+        }
+    }
+
+    function toggle() {
+        enabled = !enabled;
+        if (!enabled) {
+            stopTimer();
+        } else if (bgmWanted) {
+            startBGM();
+        }
+        return enabled;
+    }
+
+    return {
+        init: init,
+        toggle: toggle,
+        isEnabled: function () { return enabled; },
+        startBGM: startBGM,
+        stopBGM: stopBGM,
+        shoot:  function () { tone({ type: 'sine',     from: 300, to: 800, dur: 0.12, vol: 0.3 }); },
+        pop:    function () { tone({ type: 'triangle', from: 600, to: 120, dur: 0.15, vol: 0.4 }); },
+        bounce: function () { tone({ type: 'sine',     from: 400, to: 300, dur: 0.08, vol: 0.2 }); },
+        /** เสียงแฟนแฟร์ตอนชนะ (โด-มี-ซอล-โดสูง) */
+        win: function () {
+            [523.25, 659.25, 783.99, 1046.5].forEach(function (f, i) {
+                setTimeout(function () {
+                    tone({ type: 'triangle', from: f, dur: i === 3 ? 0.55 : 0.2, vol: 0.25 });
+                }, i * 160);
+            });
+        },
+        whoosh: function () { tone({ type: 'triangle', from: 320, to: 90, dur: 0.95, vol: 0.12 }); },
+        thud:   function () { tone({ type: 'sine',     from: 150, to: 40, dur: 0.4,  vol: 0.55 }); },
+        snap:   function () { tone({ type: 'sine',     from: 220, to: 110, dur: 0.06, vol: 0.2 }); }
+    };
+})();
+
+/* ============ grid.js ============ */
+/**
+ * grid.js — ตารางบับเบิลแบบรังผึ้ง (แถวยาว 11 ลูก / แถวสั้น 10 ลูก สลับกัน)
+ *
+ * แก้บั๊กเดิม: เมื่อดันแถวใหม่เข้ามาด้านบน แถวเก่าจะเลื่อนลง 1 แถวและ "สลับความยาว"
+ * ทำให้บับเบิลลูกที่ 11 หลุดตาราง ที่นี่ใช้ตัวแปร parity เพื่อให้แต่ละแถวคงความยาวเดิมเสมอ
+ */
+window.BW = window.BW || {};
+
+(function (BW) {
+    const C = BW.CONFIG;
+    const R = C.RADIUS;
+
+    class Grid {
+        constructor() {
+            this.reset();
+        }
+
+        reset() {
+            this.parity = 0;
+            this.offsetY = 0;
+            this.cells = [];
+            for (let r = 0; r < C.ROWS; r++) {
+                this.cells.push(new Array(this.rowLength(r)).fill(null));
+            }
+            this.fillRows(C.START_ROWS);
+        }
+
+        randomType() {
+            return C.TYPES[Math.floor(Math.random() * C.TYPES.length)];
+        }
+
+        isLong(r) {
+            return (r + this.parity) % 2 === 0;
+        }
+
+        rowLength(r) {
+            return this.isLong(r) ? C.COLS : C.COLS - 1;
+        }
+
+        /** เติมบับเบิลสุ่มในแถวบนสุด n แถว */
+        fillRows(n) {
+            this.offsetY = 0;
+            for (let r = 0; r < n; r++) {
+                for (let c = 0; c < this.cells[r].length; c++) {
+                    this.cells[r][c] = this.randomType();
+                }
+            }
+        }
+
+        /** ให้ตารางค่อย ๆ เลื่อนลง และเพิ่มแถวใหม่เมื่อครบหนึ่งแถว */
+        advance(px) {
+            this.offsetY += px;
+            while (this.offsetY >= C.ROW_HEIGHT) {
+                this.offsetY -= C.ROW_HEIGHT;
+                this.pushRow();
+            }
+        }
+
+        pushRow() {
+            this.cells.pop();                 // ทิ้งแถวล่างสุด (ว่างอยู่ก่อนเกมจะจบ)
+            this.parity = 1 - this.parity;    // สลับ parity เพื่อให้แถวเดิมคงความยาว
+            const row = [];
+            const len = this.rowLength(0);
+            for (let c = 0; c < len; c++) row.push(this.randomType());
+            this.cells.unshift(row);
+        }
+
+        get(r, c) {
+            if (r < 0 || r >= C.ROWS) return null;
+            const row = this.cells[r];
+            if (c < 0 || c >= row.length) return null;
+            return row[c];
+        }
+
+        set(r, c, type) {
+            this.cells[r][c] = type;
+        }
+
+        inBounds(r, c) {
+            return r >= 0 && r < C.ROWS && c >= 0 && c < this.cells[r].length;
+        }
+
+        position(r, c) {
+            const shift = this.isLong(r) ? 0 : R;
+            return {
+                x: C.FIELD_LEFT + R + shift + c * R * 2,
+                y: C.CEILING_Y + R + r * C.ROW_HEIGHT + this.offsetY
+            };
+        }
+
+        neighbors(r, c) {
+            const dc = this.isLong(r) ? [-1, 0] : [0, 1];
+            const list = [
+                [r, c - 1], [r, c + 1],
+                [r - 1, c + dc[0]], [r - 1, c + dc[1]],
+                [r + 1, c + dc[0]], [r + 1, c + dc[1]]
+            ];
+            const out = [];
+            for (const [nr, nc] of list) {
+                if (this.inBounds(nr, nc)) out.push({ r: nr, c: nc });
+            }
+            return out;
+        }
+
+        forEach(fn) {
+            for (let r = 0; r < C.ROWS; r++) {
+                for (let c = 0; c < this.cells[r].length; c++) {
+                    const t = this.cells[r][c];
+                    if (t) fn(r, c, t);
+                }
+            }
+        }
+
+        /** หาช่องว่างที่ใกล้จุด (x, y) ที่สุด */
+        nearestEmpty(x, y) {
+            let best = null;
+            let bestDist = Infinity;
+            for (let r = 0; r < C.ROWS; r++) {
+                for (let c = 0; c < this.cells[r].length; c++) {
+                    if (this.cells[r][c]) continue;
+                    const p = this.position(r, c);
+                    const d = Math.hypot(x - p.x, y - p.y);
+                    if (d < bestDist) {
+                        bestDist = d;
+                        best = { r: r, c: c };
+                    }
+                }
+            }
+            return best;
+        }
+
+        /** ลูกที่ยิงมาชนบับเบิลใดบ้างหรือยัง */
+        hitsBubble(x, y) {
+            let hit = false;
+            this.forEach((r, c) => {
+                if (hit) return;
+                const p = this.position(r, c);
+                if (Math.hypot(x - p.x, y - p.y) < C.HIT_DISTANCE) hit = true;
+            });
+            return hit;
+        }
+
+        /** กลุ่มสีเดียวกันที่ติดกับ (r, c) */
+        findMatches(r, c) {
+            const start = this.get(r, c);
+            if (!start) return [];
+            const seen = new Set([r + ',' + c]);
+            const queue = [{ r: r, c: c }];
+            const result = [];
+            while (queue.length) {
+                const cur = queue.shift();
+                result.push(cur);
+                for (const n of this.neighbors(cur.r, cur.c)) {
+                    const key = n.r + ',' + n.c;
+                    const t = this.get(n.r, n.c);
+                    if (!seen.has(key) && t && t.color === start.color) {
+                        seen.add(key);
+                        queue.push(n);
+                    }
+                }
+            }
+            return result;
+        }
+
+        /** บับเบิลที่ไม่ได้เชื่อมกับเพดาน (แถวบนสุด) */
+        findFloating() {
+            const connected = new Set();
+            const queue = [];
+            for (let c = 0; c < this.cells[0].length; c++) {
+                if (this.cells[0][c]) {
+                    connected.add('0,' + c);
+                    queue.push({ r: 0, c: c });
+                }
+            }
+            while (queue.length) {
+                const cur = queue.shift();
+                for (const n of this.neighbors(cur.r, cur.c)) {
+                    const key = n.r + ',' + n.c;
+                    if (!connected.has(key) && this.get(n.r, n.c)) {
+                        connected.add(key);
+                        queue.push(n);
+                    }
+                }
+            }
+            const floating = [];
+            this.forEach((r, c) => {
+                if (!connected.has(r + ',' + c)) floating.push({ r: r, c: c });
+            });
+            return floating;
+        }
+
+        /** ขอบล่างสุดของบับเบิลทั้งหมด (ใช้ตรวจว่าแตะพื้นหรือยัง) */
+        lowestEdge() {
+            let lowest = -Infinity;
+            this.forEach((r, c) => {
+                const y = this.position(r, c).y + R;
+                if (y > lowest) lowest = y;
+            });
+            return lowest;
+        }
+
+        isEmpty() {
+            let any = false;
+            this.forEach(() => { any = true; });
+            return !any;
+        }
+
+        /** ชนิดบับเบิลที่ยังเหลืออยู่บนกระดาน (ไว้สุ่มลูกที่ยิง ไม่ให้ติดสี) */
+        typesInPlay() {
+            const colors = new Set();
+            this.forEach((r, c, t) => colors.add(t.color));
+            return C.TYPES.filter((t) => colors.has(t.color));
+        }
+    }
+
+    BW.Grid = Grid;
+})(window.BW);
+
+/* ============ ui.js ============ */
+/**
+ * ui.js — จัดการ DOM ทั้งหมด: HUD, หน้าจอซ้อน (login/start/pause/over), การย่อขยายหน้าจอ
+ */
+window.BW = window.BW || {};
+
+BW.UI = (function () {
+    const $ = (id) => document.getElementById(id);
+
+    const el = {
+        wrapper: $('game-wrapper'),
+        level: $('top-level'),
+        coins: $('top-coins'),
+        stars: $('top-stars'),
+        high: $('top-high'),
+        time: $('time-display'),
+        score: $('score-display'),
+        sound: $('btn-sound'),
+        user: $('user-display'),
+        welcome: $('welcome-name'),
+        input: $('username-input'),
+        resultIcon: $('result-icon'),
+        resultTitle: $('result-title'),
+        resultSub: $('result-subtitle'),
+        resultScore: $('final-score'),
+        resultRecord: $('result-record'),
+        resultMsg: $('result-msg'),
+        confetti: $('confetti')
+    };
+
+    const screens = {
+        home: $('screen-home'),
+        login: $('screen-login'),
+        start: $('screen-start'),
+        pause: $('screen-pause'),
+        over: $('screen-over')
+    };
+
+    const cache = {};
+
+    function fmt(n) {
+        return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+    }
+
+    function setText(key, node, value) {
+        if (cache[key] !== value) {
+            cache[key] = value;
+            node.textContent = value;
+        }
+    }
+
+    function updateHud(s) {
+        setText('level', el.level, s.level);
+        setText('coins', el.coins, fmt(s.coins));
+        setText('stars', el.stars, s.pops + '/' + s.goal);
+        setText('high', el.high, fmt(s.high));
+        setText('time', el.time, s.time);
+        setText('score', el.score, fmt(s.score));
+        el.time.classList.toggle('low', s.time <= 10 && s.time > 0);
+    }
+
+    /** แสดงหน้าจอซ้อนหนึ่งหน้า (หรือ null = ซ่อนทั้งหมด) */
+    function show(name) {
+        if (name !== 'over') clearConfetti();
+        // ปุ่มที่เพิ่งกดจะถูกซ่อน: ปล่อยโฟกัสไม่ให้ Enter/Space ไปกดปุ่มที่มองไม่เห็นซ้ำ
+        if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+        Object.keys(screens).forEach((key) => {
+            screens[key].classList.toggle('hidden', key !== name);
+        });
+    }
+
+    function setUser(name) {
+        el.welcome.textContent = name;
+        el.user.textContent = '👤 ' + name;
+        el.user.classList.remove('hidden');
+    }
+
+    function setSoundIcon(on) {
+        el.sound.textContent = on ? '🔊' : '🔇';
+    }
+
+    var CONFETTI_COLORS = ['#fcd34d', '#f472b6', '#a78bfa', '#76c900', '#ff4747', '#4dd0e1'];
+
+    function clearConfetti() {
+        el.confetti.innerHTML = '';
+    }
+
+    /** กระดาษสีร่วงลงมาตอนชนะ */
+    function launchConfetti() {
+        clearConfetti();
+        var frag = document.createDocumentFragment();
+        for (var i = 0; i < 70; i++) {
+            var p = document.createElement('i');
+            var w = 6 + Math.random() * 8;
+            p.style.left = (Math.random() * 100) + '%';
+            p.style.setProperty('--w', w + 'px');
+            p.style.setProperty('--h', (w * (0.8 + Math.random() * 1.2)) + 'px');
+            p.style.setProperty('--c', CONFETTI_COLORS[i % CONFETTI_COLORS.length]);
+            p.style.setProperty('--t', (2.6 + Math.random() * 2.4) + 's');
+            p.style.setProperty('--d', (Math.random() * 2.2) + 's');
+            p.style.setProperty('--dx', (Math.random() * 120 - 60) + 'px');
+            p.style.setProperty('--r', (360 + Math.random() * 720) + 'deg');
+            frag.appendChild(p);
+        }
+        el.confetti.appendChild(frag);
+    }
+
+    function showResult(res) {
+        var card = screens.over.querySelector('.result-card');
+        card.classList.remove('is-win');
+
+        if (res.win) {
+            el.resultIcon.textContent = '🐿️👑';
+            el.resultTitle.textContent = 'You Win!';
+            el.resultTitle.style.color = '';
+            el.resultSub.textContent = '🎉 ยินดีด้วย! คุณชนะ! 🎉';
+            el.resultMsg.textContent = 'เก่งมาก! คุณเล่นจนหมดเวลาได้สำเร็จ';
+        } else {
+            el.resultIcon.textContent = '🐿️💧';
+            el.resultTitle.textContent = 'Game Over!';
+            el.resultTitle.style.color = '#d9381e';
+            el.resultSub.textContent = res.text;
+            el.resultMsg.textContent = '';
+        }
+        el.resultScore.textContent = fmt(res.score);
+        el.resultRecord.textContent = res.record ? '🏆 New High Score!' : '';
+        show('over');
+
+        if (res.win) {
+            void card.offsetWidth;          // รีสตาร์ทแอนิเมชันทุกครั้งที่ชนะ
+            card.classList.add('is-win');
+            launchConfetti();
+        }
+    }
+
+    /** ย่อเกมให้พอดีหน้าจอมือถือ/หน้าต่างเล็ก */
+    function fit() {
+        const scale = Math.min(1, (window.innerWidth - 16) / 812, (window.innerHeight - 16) / 532);
+        el.wrapper.style.transform = 'scale(' + scale + ')';
+    }
+
+    return {
+        el: el,
+        show: show,
+        updateHud: updateHud,
+        setUser: setUser,
+        setSoundIcon: setSoundIcon,
+        showResult: showResult,
+        fit: fit
+    };
+})();
+
+/* ============ game.js ============ */
+/**
+ * game.js — ตัวเกมหลัก: สถานะ, ฟิสิกส์การยิง, การให้คะแนน, การวาดบน canvas
+ *
+ * สถานะ: 'idle' -> 'playing' <-> 'paused' -> 'over'
+ */
+window.BW = window.BW || {};
+
+(function (BW) {
+    const C = BW.CONFIG;
+    const R = C.RADIUS;
+
+    class Game {
+        /**
+         * @param {HTMLCanvasElement} canvas
+         * @param {{onHud:Function, onEnd:Function}} hooks
+         */
+        constructor(canvas, hooks) {
+            this.canvas = canvas;
+            this.ctx = canvas.getContext('2d');
+            this.hooks = hooks;
+
+            this.grid = new BW.Grid();
+            this.state = 'idle';
+            this.aim = { x: C.CANNON.x, y: 200 };
+            this.aiming = false;
+            this.shooter = null;
+            this.next = null;
+            this.effects = [];
+            this.lastTs = 0;
+            this.crushY = null;      // ตำแหน่งขอบล่างของเพดานตอนเกมโอเวอร์ (null = ไม่แสดง)
+            this.ending = null;
+            this.pendingEnd = null;
+            this.shake = 0;
+
+            this.score = 0;
+            this.timeLeft = C.GAME_SECONDS;
+            this.level = 1;
+            this.pops = 0;
+            this.dropSpeed = C.DROP_SPEED;
+            this.coins = BW.Storage.getNumber('coins', 0);
+            this.high = BW.Storage.getNumber('highScore', 0);
+
+            this.bindInput();
+            requestAnimationFrame((t) => this.loop(t));
+        }
+
+        /* ---------------- สถานะเกม ---------------- */
+
+        start() {
+            this.grid.reset();
+            this.score = 0;
+            this.timeLeft = C.GAME_SECONDS;
+            this.level = 1;
+            this.pops = 0;
+            this.dropSpeed = C.DROP_SPEED;
+            this.effects = [];
+            this.next = null;
+            this.crushY = null;
+            this.ending = null;
+            this.shake = 0;
+            this.state = 'playing';
+            this.loadShooter();
+            BW.Sound.startBGM();
+            this.hooks.onHud(this.snapshot());
+        }
+
+        pause() {
+            if (this.state !== 'playing') return false;
+            this.state = 'paused';
+            this.aiming = false;
+            BW.Sound.stopBGM();
+            return true;
+        }
+
+        resume() {
+            if (this.state !== 'paused') return false;
+            this.state = 'playing';
+            BW.Sound.startBGM();
+            return true;
+        }
+
+        end(win, text) {
+            if (this.state === 'over' || this.state === 'idle' || this.state === 'ending') return;
+            this.aiming = false;
+            BW.Sound.stopBGM();
+
+            if (win) {
+                this.finish(win, text);
+                return;
+            }
+
+            // แพ้: ให้เพดานเลื่อนลงมาทับกระดานก่อน แล้วค่อยขึ้นหน้าสรุปผล
+            this.state = 'ending';
+            this.pendingEnd = { win: win, text: text };
+            this.ending = { t: 0, thudDone: false };
+            this.crushY = C.CEILING_Y;
+            BW.Sound.whoosh();
+        }
+
+        updateEnding(dt) {
+            const e = this.ending;
+            e.t += dt;
+            const k = Math.min(1, e.t / C.CRUSH_SECONDS);
+            const from = C.CEILING_Y;
+            const to = C.GROUND_Y + 50;
+            this.crushY = from + (to - from) * k * k;      // เร่งความเร็วลงเหมือนตกลงมา
+
+            if (k >= 1 && !e.thudDone) {
+                e.thudDone = true;
+                this.shake = 0.3;
+                BW.Sound.thud();
+            }
+            if (e.t >= C.CRUSH_SECONDS + C.CRUSH_HOLD) {
+                this.finish(this.pendingEnd.win, this.pendingEnd.text);
+            }
+        }
+
+        finish(win, text) {
+            this.state = 'over';
+            this.aiming = false;
+            if (win) BW.Sound.win();
+
+            const record = this.score > this.high;
+            if (record) {
+                this.high = this.score;
+                BW.Storage.set('highScore', this.high);
+            }
+            BW.Storage.set('coins', this.coins);
+
+            this.hooks.onHud(this.snapshot());
+            this.hooks.onEnd({ win: win, text: text, score: this.score, record: record });
+        }
+
+        /** กลับสู่เมนู: ล้างกระดาน หยุดเพลง และกลับเป็นสถานะ idle */
+        quit() {
+            if (this.state === 'playing' || this.state === 'paused') {
+                BW.Storage.set('coins', this.coins);
+            }
+            this.state = 'idle';
+            this.aiming = false;
+            BW.Sound.stopBGM();
+            this.grid.reset();
+            this.effects = [];
+            this.crushY = null;
+            this.ending = null;
+            this.shake = 0;
+            this.shooter = null;
+            this.next = null;
+            this.score = 0;
+            this.timeLeft = C.GAME_SECONDS;
+            this.level = 1;
+            this.pops = 0;
+            this.dropSpeed = C.DROP_SPEED;
+            this.hooks.onHud(this.snapshot());
+        }
+
+        snapshot() {
+            return {
+                score: this.score,
+                time: Math.max(0, Math.ceil(this.timeLeft)),
+                level: this.level,
+                coins: this.coins,
+                pops: this.pops,
+                goal: C.GOAL_PER_LEVEL * this.level,
+                high: Math.max(this.high, this.score)
+            };
+        }
+
+        /* ---------------- ลูกที่ยิง ---------------- */
+
+        loadShooter() {
+            const inPlay = this.grid.typesInPlay();
+            const pool = inPlay.length ? inPlay : C.TYPES;
+            const pick = () => pool[Math.floor(Math.random() * pool.length)];
+
+            let type = this.next;
+            if (!type || !pool.some((t) => t.color === type.color)) type = pick();
+            this.next = pick();
+
+            this.shooter = {
+                x: C.CANNON.x,
+                y: C.CANNON.y,
+                vx: 0,
+                vy: 0,
+                moving: false,
+                type: type
+            };
+        }
+
+        aimAngle() {
+            let a = Math.atan2(this.aim.y - C.CANNON.y, this.aim.x - C.CANNON.x);
+            if (a > 0) a = a > Math.PI / 2 ? -Math.PI + 0.2 : -0.2;   // เล็งต่ำกว่าปืน
+            return Math.max(-Math.PI + 0.2, Math.min(-0.2, a));
+        }
+
+        shoot() {
+            const s = this.shooter;
+            if (this.state !== 'playing' || !s || s.moving) return;
+            const a = this.aimAngle();
+            s.vx = Math.cos(a) * C.SHOT_SPEED;
+            s.vy = Math.sin(a) * C.SHOT_SPEED;
+            s.moving = true;
+            BW.Sound.shoot();
+        }
+
+        /* ---------------- Input (เมาส์ + ทัช ผ่าน Pointer Events) ---------------- */
+
+        bindInput() {
+            const c = this.canvas;
+            const toCanvas = (e) => {
+                const rect = c.getBoundingClientRect();
+                return {
+                    x: (e.clientX - rect.left) * (c.width / rect.width),
+                    y: (e.clientY - rect.top) * (c.height / rect.height)
+                };
+            };
+
+            c.addEventListener('pointerdown', (e) => {
+                BW.Sound.init();
+                this.aiming = true;
+                this.aim = toCanvas(e);
+                try { c.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+            });
+
+            c.addEventListener('pointermove', (e) => {
+                this.aim = toCanvas(e);
+            });
+
+            c.addEventListener('pointerup', (e) => {
+                if (!this.aiming) return;
+                this.aiming = false;
+                this.aim = toCanvas(e);
+                this.shoot();
+            });
+
+            c.addEventListener('pointercancel', () => { this.aiming = false; });
+        }
+
+        /* ---------------- Loop ---------------- */
+
+        loop(ts) {
+            const dt = Math.min(0.033, (ts - (this.lastTs || ts)) / 1000);
+            this.lastTs = ts;
+
+            if (this.state === 'playing') this.update(dt);
+            if (this.state === 'ending') this.updateEnding(dt);
+            if (this.shake > 0) this.shake = Math.max(0, this.shake - dt);
+            if (this.state !== 'paused') this.updateEffects(dt);
+            this.render();
+            if (this.state === 'playing') this.hooks.onHud(this.snapshot());
+
+            requestAnimationFrame((t) => this.loop(t));
+        }
+
+        update(dt) {
+            this.timeLeft -= dt;
+            if (this.timeLeft <= 0) {
+                this.timeLeft = 0;
+                this.end(true, 'Time Out!');
+                return;
+            }
+
+            this.grid.advance(this.dropSpeed * dt);
+            if (this.grid.lowestEdge() >= C.GROUND_Y) {
+                this.end(false, 'Touched Ground!');
+                return;
+            }
+
+            this.moveShooter(dt);
+        }
+
+        moveShooter(dt) {
+            const s = this.shooter;
+            if (!s || !s.moving) return;
+
+            // แบ่งก้าวย่อย ป้องกันลูกทะลุบับเบิลเมื่อเฟรมช้า
+            const steps = Math.max(1, Math.ceil((C.SHOT_SPEED * dt) / 6));
+            for (let i = 0; i < steps; i++) {
+                s.x += (s.vx * dt) / steps;
+                s.y += (s.vy * dt) / steps;
+
+                if (s.x - R <= C.FIELD_LEFT) {
+                    s.x = C.FIELD_LEFT + R;
+                    s.vx = Math.abs(s.vx);
+                    BW.Sound.bounce();
+                } else if (s.x + R >= C.FIELD_RIGHT) {
+                    s.x = C.FIELD_RIGHT - R;
+                    s.vx = -Math.abs(s.vx);
+                    BW.Sound.bounce();
+                }
+
+                if (s.y - R <= C.CEILING_Y + this.grid.offsetY || this.grid.hitsBubble(s.x, s.y)) {
+                    this.land();
+                    return;
+                }
+            }
+        }
+
+        land() {
+            const s = this.shooter;
+            s.moving = false;
+
+            const cell = this.grid.nearestEmpty(s.x, s.y);
+            if (!cell) {
+                this.end(false, 'Board Full!');
+                return;
+            }
+
+            this.grid.set(cell.r, cell.c, s.type);
+            BW.Sound.snap();
+
+            const matches = this.grid.findMatches(cell.r, cell.c);
+            if (matches.length >= C.MIN_MATCH) {
+                this.popCells(matches);
+                this.dropCells(this.grid.findFloating());
+                this.checkLevelUp();
+                if (this.grid.isEmpty()) this.grid.fillRows(3);   // เคลียร์หมดกระดาน -> เติมใหม่
+            }
+
+            this.loadShooter();
+        }
+
+        popCells(cells) {
+            for (const { r, c } of cells) {
+                const p = this.grid.position(r, c);
+                this.effects.push({ kind: 'pop', x: p.x, y: p.y, type: this.grid.get(r, c), t: 0 });
+                this.grid.set(r, c, null);
+            }
+            this.score += cells.length * C.POP_SCORE;
+            this.pops += cells.length;
+            this.coins += cells.length;
+            BW.Sound.pop();
+        }
+
+        dropCells(cells) {
+            for (const { r, c } of cells) {
+                const p = this.grid.position(r, c);
+                this.effects.push({
+                    kind: 'fall', x: p.x, y: p.y, vy: -120,
+                    type: this.grid.get(r, c), t: 0
+                });
+                this.grid.set(r, c, null);
+                this.score += C.FLOAT_SCORE;
+                this.coins += 1;
+            }
+        }
+
+        checkLevelUp() {
+            const goal = C.GOAL_PER_LEVEL * this.level;
+            if (this.pops >= goal) {
+                this.pops = 0;
+                this.level += 1;
+                this.timeLeft += C.LEVEL_TIME_BONUS;
+                this.dropSpeed = Math.min(C.DROP_SPEED_MAX, this.dropSpeed + C.DROP_SPEED_STEP);
+            }
+        }
+
+        updateEffects(dt) {
+            for (const fx of this.effects) {
+                fx.t += dt;
+                if (fx.kind === 'fall') {
+                    fx.vy += 1400 * dt;
+                    fx.y += fx.vy * dt;
+                }
+            }
+            this.effects = this.effects.filter((fx) =>
+                fx.kind === 'pop' ? fx.t < 0.25 : fx.y < C.HEIGHT + R
+            );
+        }
+
+        /* ---------------- วาดภาพ ---------------- */
+
+        render() {
+            const ctx = this.ctx;
+            ctx.clearRect(0, 0, C.WIDTH, C.HEIGHT);
+            ctx.save();
+            if (this.shake > 0) {
+                const m = 10 * (this.shake / 0.3);
+                ctx.translate((Math.random() - 0.5) * m, (Math.random() - 0.5) * m);
+            }
+            this.drawField(ctx);
+            this.drawGrid(ctx);
+            this.drawEffects(ctx);
+            this.drawCeiling(ctx);
+            this.drawAim(ctx);
+            this.drawCannon(ctx);
+            ctx.restore();
+        }
+
+        /** เพดานไม้ที่เลื่อนลงมาทับกระดานตอนเกมโอเวอร์ */
+        drawCeiling(ctx) {
+            if (this.crushY === null) return;
+            const x = C.FIELD_LEFT - 3;
+            const w = C.FIELD_RIGHT - C.FIELD_LEFT + 6;
+            const top = C.CEILING_Y - 3;
+            const y = this.crushY;
+            if (y - top <= 0) return;
+
+            const grad = ctx.createLinearGradient(0, top, 0, y);
+            grad.addColorStop(0, '#8a5a2b');
+            grad.addColorStop(1, '#5a3718');
+            ctx.fillStyle = grad;
+            ctx.fillRect(x, top, w, y - top);
+
+            // ลายแผ่นไม้
+            ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            for (let px = x + 34; px < x + w; px += 34) {
+                ctx.moveTo(px, top);
+                ctx.lineTo(px, y);
+            }
+            ctx.stroke();
+
+            // ขอบล่างและหนามชี้ลง
+            ctx.fillStyle = '#3b2210';
+            ctx.fillRect(x, y - 8, w, 8);
+            ctx.fillStyle = '#ffde7a';
+            for (let px = x + 2; px + 30 <= x + w; px += 34) {
+                ctx.beginPath();
+                ctx.moveTo(px, y);
+                ctx.lineTo(px + 30, y);
+                ctx.lineTo(px + 15, y + 12);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+
+        drawField(ctx) {
+            ctx.strokeStyle = '#6d4c27';
+            ctx.lineWidth = 6;
+            ctx.beginPath();
+            ctx.moveTo(C.FIELD_LEFT - 3, C.CEILING_Y - 3);
+            ctx.lineTo(C.FIELD_LEFT - 3, 490);
+            ctx.moveTo(C.FIELD_RIGHT + 3, C.CEILING_Y - 3);
+            ctx.lineTo(C.FIELD_RIGHT + 3, 490);
+            ctx.moveTo(C.FIELD_LEFT - 3, C.CEILING_Y - 3);
+            ctx.lineTo(C.FIELD_RIGHT + 3, C.CEILING_Y - 3);
+            ctx.stroke();
+
+            ctx.strokeStyle = '#ff4747';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([8, 6]);
+            ctx.beginPath();
+            ctx.moveTo(C.FIELD_LEFT, C.GROUND_Y);
+            ctx.lineTo(C.FIELD_RIGHT, C.GROUND_Y);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        drawGrid(ctx) {
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(C.FIELD_LEFT, C.CEILING_Y, C.FIELD_RIGHT - C.FIELD_LEFT, C.HEIGHT);
+            ctx.clip();
+            this.grid.forEach((r, c, type) => {
+                const p = this.grid.position(r, c);
+                this.drawBubble(ctx, p.x, p.y, type, R);
+            });
+            ctx.restore();
+        }
+
+        drawEffects(ctx) {
+            for (const fx of this.effects) {
+                if (fx.kind === 'pop') {
+                    const k = fx.t / 0.25;
+                    ctx.save();
+                    ctx.globalAlpha = 1 - k;
+                    this.drawBubble(ctx, fx.x, fx.y, fx.type, R * (1 + k * 0.5));
+                    ctx.restore();
+                } else {
+                    this.drawBubble(ctx, fx.x, fx.y, fx.type, R);
+                }
+            }
+        }
+
+        drawAim(ctx) {
+            if (this.state !== 'playing' || !this.shooter || this.shooter.moving) return;
+            const a = this.aimAngle();
+            ctx.beginPath();
+            ctx.moveTo(C.CANNON.x, C.CANNON.y);
+            ctx.lineTo(C.CANNON.x + Math.cos(a) * 140, C.CANNON.y + Math.sin(a) * 140);
+            ctx.strokeStyle = this.aiming ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.35)';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([5, 5]);
+            ctx.stroke();
+            ctx.setLineDash([]);
+        }
+
+        drawCannon(ctx) {
+            const cx = C.CANNON.x;
+            const cy = C.CANNON.y;
+
+            // กระบอกปืน (หมุนตามมุมเล็ง)
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate(this.aimAngle() + Math.PI / 2);
+            ctx.fillStyle = '#4a2a18';
+            ctx.fillRect(-9, -42, 18, 50);
+            ctx.restore();
+
+            // ฐาน
+            ctx.fillStyle = '#6d4c27';
+            ctx.beginPath();
+            ctx.arc(cx, cy + 12, 22, 0, Math.PI * 2);
+            ctx.fill();
+
+            // กระรอก + ลูกถัดไป
+            ctx.font = '36px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillStyle = '#fff';
+            ctx.fillText('🐿️', cx - 100, cy + 10);
+
+            if (this.next) {
+                this.drawBubble(ctx, cx - 55, cy + 12, this.next, 12);
+                ctx.font = '10px Kanit, sans-serif';
+                ctx.fillStyle = '#ffde7a';
+                ctx.fillText('NEXT', cx - 55, cy + 32);
+            }
+
+            if (this.shooter) {
+                this.drawBubble(ctx, this.shooter.x, this.shooter.y, this.shooter.type, R);
+            }
+        }
+
+        drawBubble(ctx, x, y, type, radius) {
+            ctx.save();
+
+            ctx.beginPath();
+            ctx.arc(x, y, radius, 0, Math.PI * 2);
+            ctx.fillStyle = type.color;
+            ctx.fill();
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = type.border || 'rgba(0,0,0,0.15)';
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.arc(x - radius * 0.3, y - radius * 0.3, radius * 0.25, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(255,255,255,0.45)';
+            ctx.fill();
+
+            if (type.icon && radius >= 10) {
+                ctx.font = Math.round(radius * 0.85) + 'px sans-serif';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#fff';
+                ctx.fillText(type.icon, x, y + 1);
+            }
+
+            ctx.restore();
+        }
+    }
+
+    BW.Game = Game;
+})(window.BW);
+
+/* ============ main.js ============ */
+/**
+ * main.js — จุดเริ่มต้น: ผูกปุ่มต่าง ๆ เข้ากับตัวเกม
+ */
+(function (BW) {
+    const UI = BW.UI;
+    const $ = (id) => document.getElementById(id);
+
+    const game = new BW.Game($('gameCanvas'), {
+        onHud: UI.updateHud,
+        onEnd: UI.showResult
+    });
+
+    BW.game = game;   // เปิดไว้ให้ดีบัก/ทดสอบผ่านคอนโซล
+
+    // ค่าเริ่มต้นของ HUD (เหรียญ/คะแนนสูงสุดที่บันทึกไว้)
+    UI.updateHud(game.snapshot());
+    UI.fit();
+    window.addEventListener('resize', UI.fit);
+
+    // ชื่อผู้เล่นที่เคยใช้
+    UI.el.input.value = BW.Storage.get('username', '');
+
+    /* ---------- หน้าแรก (หน้าปก) ---------- */
+    let loggedIn = false;
+
+    function leaveCover() {
+        BW.Sound.init();
+        if (loggedIn) {
+            UI.show('start');
+        } else {
+            UI.show('login');
+            UI.el.input.focus();
+        }
+    }
+
+    $('screen-home').addEventListener('click', leaveCover);
+    UI.show('home');
+
+    /* ---------- Login ---------- */
+    function login() {
+        loggedIn = true;
+        BW.Sound.init();
+        const name = UI.el.input.value.trim() || 'Player';
+        BW.Storage.set('username', name);
+        UI.setUser(name);
+        UI.show('start');
+    }
+
+    $('btn-login').addEventListener('click', login);
+    UI.el.input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') login();
+    });
+
+    /* ---------- เริ่ม / เล่นใหม่ ---------- */
+    function play() {
+        BW.Sound.init();
+        UI.show(null);
+        game.start();
+    }
+
+    $('btn-play').addEventListener('click', play);
+    $('btn-again').addEventListener('click', play);
+
+    /* ---------- Pause / Resume / End ---------- */
+    function togglePause() {
+        BW.Sound.init();
+        if (game.state === 'playing') {
+            game.pause();
+            UI.show('pause');
+        } else if (game.state === 'paused') {
+            game.resume();
+            UI.show(null);
+        }
+    }
+
+    $('btn-pause').addEventListener('click', togglePause);
+    $('btn-resume').addEventListener('click', togglePause);
+    $('btn-end').addEventListener('click', () => {
+        // จบเกมจากหน้า Pause: ต้องกลับเป็นสถานะ playing ก่อน เพื่อให้ end() ทำงาน
+        UI.show(null);
+        game.state = 'playing';
+        game.end(false, 'End Game');
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.target === UI.el.input) return;
+        if (!$('screen-home').classList.contains('hidden') && (e.key === 'Enter' || e.key === ' ')) {
+            leaveCover();
+            return;
+        }
+        if (e.key === 'p' || e.key === 'P' || e.key === 'Escape') togglePause();
+    });
+
+    // สลับแท็บ -> หยุดเกมอัตโนมัติ
+    document.addEventListener('visibilitychange', () => {
+        if (document.hidden && game.state === 'playing') {
+            game.pause();
+            UI.show('pause');
+        }
+    });
+
+    /* ---------- กลับหน้าแรก ---------- */
+    function goHome() {
+        game.quit();
+        UI.show('home');
+    }
+
+    $('btn-home-pause').addEventListener('click', goHome);
+    $('btn-home-over').addEventListener('click', goHome);
+    $('btn-switch').addEventListener('click', () => {
+        UI.show('login');
+        UI.el.input.focus();
+    });
+
+    /* ---------- เสียง ---------- */
+    $('btn-sound').addEventListener('click', () => {
+        BW.Sound.init();
+        UI.setSoundIcon(BW.Sound.toggle());
+    });
+})(window.BW);
+
+/* ============ pwa.js ============ */
+/**
+ * pwa.js — ลงทะเบียน Service Worker และปุ่ม "Install App"
+ * ทำงานเฉพาะเมื่อเปิดผ่าน http(s) — เปิดจากไฟล์ตรง ๆ (file://) เกมยังเล่นได้ปกติ
+ */
+(function () {
+    const installBtn = document.getElementById('btn-install');
+    let deferredPrompt = null;
+
+    if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+        window.addEventListener('load', function () {
+            navigator.serviceWorker.register('sw.js').catch(function () { /* ignore */ });
+        });
+    }
+
+    window.addEventListener('beforeinstallprompt', function (e) {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.classList.remove('hidden');
+    });
+
+    if (installBtn) {
+        installBtn.addEventListener('click', function () {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function () {
+                deferredPrompt = null;
+                installBtn.classList.add('hidden');
+            });
+        });
+    }
+
+    window.addEventListener('appinstalled', function () {
+        if (installBtn) installBtn.classList.add('hidden');
+    });
+})();
+
+</script>
+</body>
+  </html>
